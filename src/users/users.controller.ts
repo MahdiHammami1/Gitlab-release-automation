@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Body, Delete } from '@nestjs/common';
+import {Controller, Get, Param, Post, Body, Delete} from '@nestjs/common';
 import { UsersService } from './users.service';
 import {CreateUserDto} from "./dto/create-user-dto";
 import type { User } from '@prisma/client';
@@ -9,11 +9,13 @@ import type { User } from '@prisma/client';
 export class UsersController {
     constructor(private readonly usersService: UsersService) {}
 
+
+
+
     @Get()
-    findAll(): Promise<User[]> {
+    async findAll(): Promise<User[]> {
         return this.usersService.findAll();
     }
-
     @Get(':id')
     findOne(@Param('id') id: string): Promise<User | null> {
         return this.usersService.findOne(+id);
@@ -27,6 +29,6 @@ export class UsersController {
 
     @Delete(':id')
     remove(@Param('id') id: string): Promise<void> {
-        return this.usersService.remove(+id);
+        return this.usersService.remove(id);
     }
 }

@@ -1,7 +1,8 @@
 // users.service.ts
-import { Injectable } from '@nestjs/common';
+import {Body, Delete, Get, HttpException, HttpStatus, Injectable, Param, Post} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import type  {Prisma,User} from '@prisma/client';
+import {CreateUserDto} from "./dto/create-user-dto";
 
 @Injectable()
 export class UsersService {
@@ -9,7 +10,15 @@ export class UsersService {
     }
 
     async findAll(): Promise<User[]> {
-        return this.prisma.user.findMany();
+        try {
+            return await this.prisma.user.findMany();
+        } catch (error) {
+            console.error('Database error:', error);
+            throw new HttpException(
+                'Failed to retrieve users',
+                HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        }
     }
 
     async findOne(id: number): Promise<User | null> {
@@ -19,9 +28,12 @@ export class UsersService {
 
 
 
-    async remove(id: number): Promise<void> {
-        await this.prisma.user.delete({ where: { id: String(id) } });
+    async remove(id: string): Promise<void> {
+        await this.prisma.user.delete({
+            where: { id },
+        });
     }
+
 
     async findByEmail(email: string) {
         return this.prisma.user.findUnique({
