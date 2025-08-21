@@ -9,11 +9,58 @@ datasource db {
 
 model User {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  gitlabId     Int?
+  gitlabId     String? // GitLab renvoie souvent des IDs en String -> plus sûr
   email        String   @unique
   username     String
   accessToken  String
   refreshToken String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model Module {
+  id             String          @id @default(auto()) @map("_id") @db.ObjectId
+  name           String
+  repoUrl        String
+  moduleReleases ModuleRelease[]
+}
+
+model Tag {
+  id             String          @id @default(auto()) @map("_id") @db.ObjectId
+  name           String
+  link           String
+  commitHash     String // conservé en String (hash Git)
+  createdAt      DateTime        @default(now())
+  author         String
+  moduleReleases ModuleRelease[]
+}
+
+model Artefact {
+  id              String         @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  url             String
+  type            String
+  moduleReleaseId String?        @db.ObjectId
+  moduleRelease   ModuleRelease? @relation(fields: [moduleReleaseId], references: [id])
+}
+
+model ModuleRelease {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  moduleId  String  @db.ObjectId
+  tagId     String  @db.ObjectId
+  releaseId String? @db.ObjectId
+
+  module    Module     @relation(fields: [moduleId], references: [id])
+  tag       Tag        @relation(fields: [tagId], references: [id])
+  release   Release?   @relation(fields: [releaseId], references: [id])
+  artefacts Artefact[]
+}
+
+model Release {
+  id              String          @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  author          String
+  changelogGlobal Bytes?
+  createdAt       DateTime        @default(now())
+  moduleReleases  ModuleRelease[]
 }

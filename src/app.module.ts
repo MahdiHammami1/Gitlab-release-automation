@@ -7,6 +7,11 @@ import { PrismaModule } from './prisma/prisma.module';
 import {AuthModule} from "./auth/auth.module";
 import { HttpModule } from '@nestjs/axios';
 import { GitlabModule } from './gitlab/gitlab.module';
+import {ReleasesModule} from "./releases/releases.module";
+import {TagsModule} from "./tags/tags.module";
+import {ModuleReleasesModule} from "./module-releases/module-releases.module";
+import { ArtefactsModule } from './artefacts/artefacts.module';
+import {ModulesModule} from "./modules/modules.module";
 
 @Module({
   imports: [
@@ -19,7 +24,14 @@ import { GitlabModule } from './gitlab/gitlab.module';
     PrismaModule,
 
     UsersModule,
-    AuthModule
+    AuthModule,
+    ReleasesModule,
+    TagsModule,
+    ModuleReleasesModule,
+    ArtefactsModule,
+    ModulesModule
+
+
   ],
   controllers: [AppController],
   providers: [AppService],

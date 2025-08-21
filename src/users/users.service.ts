@@ -49,7 +49,10 @@ export class UsersService {
         refreshToken?: string;
     }) {
         return this.prisma.user.create({
-            data
+            data: {
+                ...data,
+                gitlabId: String(data.gitlabId), // conversion explicite en string
+            }
         });
     }
 
