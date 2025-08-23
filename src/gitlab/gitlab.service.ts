@@ -2,6 +2,7 @@ import { Injectable, BadRequestException, HttpException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { firstValueFrom } from 'rxjs';
+import axios from 'axios';
 
 type Dict = Record<string, any>;
 
@@ -41,9 +42,17 @@ export class GitlabService {
   }
 
   private async request<T = any>(
-    method: 'GET'|'POST'|'PUT'|'DELETE',
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE',
     url: string,
-    { params, headers, responseType }: { params?: Dict; headers?: Dict; responseType?: AxiosRequestConfig['responseType'] } = {}
+    {
+      params,
+      headers,
+      responseType,
+    }: {
+      params?: Dict;
+      headers?: Dict;
+      responseType?: AxiosRequestConfig['responseType'];
+    } = {},
   ): Promise<T> {
     const cfg: AxiosRequestConfig = {
       method,
@@ -58,18 +67,30 @@ export class GitlabService {
       return data;
     } catch (e: any) {
       const status = e?.response?.status;
-      const body   = e?.response?.data ?? e?.message ?? 'GitLab proxy error';
+      const body = e?.response?.data ?? e?.message ?? 'GitLab proxy error';
 
       // Fallback 401 → PRIVATE-TOKEN si on avait tenté Bearer
       const triedBearer = !!headers?.Authorization;
       if (status === 401 && triedBearer) {
         try {
-          const token = (headers.Authorization as string).replace(/^Bearer\s+/i, '');
-          const { data } = await firstValueFrom(this.http.request<T>({ ...cfg, headers: this.privateToken(token) }));
+          const token = (headers.Authorization as string).replace(
+            /^Bearer\s+/i,
+            '',
+          );
+          const { data } = await firstValueFrom(
+            this.http.request<T>({ ...cfg, headers: this.privateToken(token) }),
+          );
           return data;
         } catch (e2: any) {
-          console.error('GitLab retry (PRIVATE-TOKEN) →', e2?.response?.status, e2?.response?.data || e2?.message);
-          throw new HttpException(e2?.response?.data || 'GitLab auth failed', e2?.response?.status ?? 401);
+          console.error(
+            'GitLab retry (PRIVATE-TOKEN) →',
+            e2?.response?.status,
+            e2?.response?.data || e2?.message,
+          );
+          throw new HttpException(
+            e2?.response?.data || 'GitLab auth failed',
+            e2?.response?.status ?? 401,
+          );
         }
       }
 
@@ -78,12 +99,20 @@ export class GitlabService {
     }
   }
 
-  private get<T = any>(path: string, params?: Dict, token?: string) {
-    return this.request<T>('GET', `${this.base}${path}`, { params, headers: this.bearer(token) });
+  // Rendre la méthode get accessible publiquement pour le contrôleur
+  public get<T = any>(path: string, params?: Dict, token?: string) {
+    return this.request<T>('GET', `${this.base}${path}`, {
+      params,
+      headers: this.bearer(token),
+    });
   }
 
   private getRawText(path: string, params?: Dict, token?: string) {
-    return this.request<string>('GET', `${this.base}${path}`, { params, headers: this.bearer(token), responseType: 'text' });
+    return this.request<string>('GET', `${this.base}${path}`, {
+      params,
+      headers: this.bearer(token),
+      responseType: 'text',
+    });
   }
 
   // -------- Profil & projets --------
@@ -91,12 +120,29 @@ export class GitlabService {
     return this.get('/user');
   }
 
-  myProjects(params: {
-    search?: string; membership?: string; visibility?: 'public'|'internal'|'private';
-    page?: number; per_page?: number; order_by?: string; sort?: 'asc'|'desc';
-    simple?: boolean;
-  } = { membership: 'true', simple: true, order_by: 'last_activity_at', per_page: 50 }) {
-    return this.get('/projects', { simple: true, order_by: 'last_activity_at', per_page: 50, ...params });
+  myProjects(
+    params: {
+      search?: string;
+      membership?: string;
+      visibility?: 'public' | 'internal' | 'private';
+      page?: number;
+      per_page?: number;
+      order_by?: string;
+      sort?: 'asc' | 'desc';
+      simple?: boolean;
+    } = {
+      membership: 'true',
+      simple: true,
+      order_by: 'last_activity_at',
+      per_page: 50,
+    },
+  ) {
+    return this.get('/projects', {
+      simple: true,
+      order_by: 'last_activity_at',
+      per_page: 50,
+      ...params,
+    });
   }
 
   // Deux variantes : par ID numérique ou par chemin namespace/projet (url-encodé)
@@ -110,15 +156,24 @@ export class GitlabService {
   }
 
   // -------- Issues / MRs / Pipelines --------
-  issues(id: string | number, params: Dict = { state: 'opened', per_page: 50 }) {
+  issues(
+    id: string | number,
+    params: Dict = { state: 'opened', per_page: 50 },
+  ) {
     return this.get(`/projects/${id}/issues`, params);
   }
 
-  mergeRequests(id: string | number, params: Dict = { state: 'opened', per_page: 50 }) {
+  mergeRequests(
+    id: string | number,
+    params: Dict = { state: 'opened', per_page: 50 },
+  ) {
     return this.get(`/projects/${id}/merge_requests`, params);
   }
 
-  pipelines(id: string | number, params: Dict = { per_page: 20, order_by: 'updated_at' }) {
+  pipelines(
+    id: string | number,
+    params: Dict = { per_page: 20, order_by: 'updated_at' },
+  ) {
     return this.get(`/projects/${id}/pipelines`, params);
   }
 
@@ -139,15 +194,29 @@ export class GitlabService {
     return this.get(`/projects/${id}/repository/tags`, params);
   }
 
-  releases(id: string | number, params: Dict = { per_page: 20, page: 1, order_by: 'released_at', sort: 'desc' }) {
+  releases(
+    id: string | number,
+    params: Dict = {
+      per_page: 20,
+      page: 1,
+      order_by: 'released_at',
+      sort: 'desc',
+    },
+  ) {
     return this.get(`/projects/${id}/releases`, params);
   }
 
-  compare(id: string | number, params: { from: string; to: string; straight?: boolean }) {
+  compare(
+    id: string | number,
+    params: { from: string; to: string; straight?: boolean },
+  ) {
     return this.get(`/projects/${id}/repository/compare`, params);
   }
 
-  tree(id: string | number, params: Dict = { path: '', per_page: 100, page: 1, recursive: false }) {
+  tree(
+    id: string | number,
+    params: Dict = { path: '', per_page: 100, page: 1, recursive: false },
+  ) {
     return this.get(`/projects/${id}/repository/tree`, params);
   }
 
@@ -182,13 +251,20 @@ export class GitlabService {
         const content = Buffer.from(file.content, 'base64').toString('utf-8');
         const json = JSON.parse(content);
         if (json.modules && Array.isArray(json.modules)) {
-          return { modules: json.modules, file: fileInfo.name, branch: fileInfo.ref };
+          return {
+            modules: json.modules,
+            file: fileInfo.name,
+            branch: fileInfo.ref,
+          };
         }
       } catch (e) {
         // On continue sur le prochain fichier/branche
       }
     }
-    return { error: 'Aucun fichier release-config.ts ou release.config.json trouvé à la racine de main/master, ou pas de modules.' };
+    return {
+      error:
+        'Aucun fichier release-config.ts ou release.config.json trouvé à la racine de main/master, ou pas de modules.',
+    };
   }
 
   /**
@@ -209,5 +285,35 @@ export class GitlabService {
       ? `${this.base}/projects/${id}/repository/tags/${encodeURIComponent(tagName)}`
       : `${this.base}/projects/${encodeURIComponent(id)}/repository/tags/${encodeURIComponent(tagName)}`;
     return this.request('GET', url, { headers: this.bearer() });
+  }
+
+  /**
+   * Retourne la liste des commits depuis la date du dernier release global
+   * @param id id du projet GitLab
+   */
+  async commitsSinceLastRelease(id: string) {
+    // Récupérer la date du dernier release global depuis l'API locale
+    const releasesResp = await axios.get('http://localhost:3000/releases');
+    const releases = releasesResp.data;
+    if (!Array.isArray(releases) || releases.length === 0) return [];
+    // On prend le release le plus récent (createdAt max)
+    const lastRelease = releases.reduce((a, b) => new Date(a.createdAt) > new Date(b.createdAt) ? a : b);
+    const sinceDate = new Date(lastRelease.createdAt);
+    // Récupérer tous les commits du repo (pagination)
+    let allCommits: any[] = [];
+    let page = 1;
+    let hasMore = true;
+    while (hasMore) {
+      const commits = await this.get(`/projects/${id}/repository/commits`, { per_page: 100, page });
+      if (Array.isArray(commits) && commits.length > 0) {
+        allCommits = allCommits.concat(commits);
+        page++;
+        hasMore = commits.length === 100;
+      } else {
+        hasMore = false;
+      }
+    }
+    // Filtrer les commits dont la date est STRICTEMENT supérieure à la date du dernier release
+    return allCommits.filter((c: any) => new Date(c.committed_date) > sinceDate);
   }
 }

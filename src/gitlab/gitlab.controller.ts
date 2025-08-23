@@ -161,4 +161,20 @@ export class GitlabController {
     return this.svc.fileRaw(id, 'release.config.json', ref);
   }
 
+  // Nouvelle route : Commits depuis le dernier release
+  @Get('projects/:id/commits/since-last-release')
+  async commitsSinceLastRelease(
+    @Param('id') id: string
+  ) {
+    return this.svc.commitsSinceLastRelease(id);
+  }
+
+  // Nouvelle route : lister tous les commits d'un projet (aucun filtre)
+  @Get('projects/:id/commits')
+  async getAllCommits(
+    @Param('id') id: string
+  ) {
+    return this.svc.get(`/projects/${id}/repository/commits`);
+  }
+
 }
