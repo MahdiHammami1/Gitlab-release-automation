@@ -2,7 +2,13 @@ import { Injectable, BadRequestException, HttpException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { firstValueFrom } from 'rxjs';
+import { promisify } from 'util';
+import { exec } from 'child_process';
 import axios from 'axios';
+import * as path from 'path';
+import * as fs from 'fs';
+
+
 
 type Dict = Record<string, any>;
 
@@ -19,6 +25,7 @@ function cleanParams(p?: Dict): Dict | undefined {
 function isNumericId(id: string) {
   return /^\d+$/.test(id);
 }
+const execAsync = promisify(exec);
 
 @Injectable()
 export class GitlabService {
@@ -104,6 +111,15 @@ export class GitlabService {
     return this.request<T>('GET', `${this.base}${path}`, {
       params,
       headers: this.bearer(token),
+    });
+  }
+
+  public post<T = any>(path: string, body?: Dict, token?: string) {
+    return this.request<T>('POST', `${this.base}${path}`, {
+      headers: this.bearer(token),
+      params: undefined,
+      responseType: undefined,
+      ...(body ? { data: body } : {}),
     });
   }
 
@@ -316,4 +332,71 @@ export class GitlabService {
     // Filtrer les commits dont la date est STRICTEMENT supérieure à la date du dernier release
     return allCommits.filter((c: any) => new Date(c.committed_date) > sinceDate);
   }
+
+  async getProject(projectId: string): Promise<any> {
+    const res = await axios.get(`http://localhost:3000/gitlab/projects/${projectId}`);
+    return res.data;
+  }
+
+
+  async prepareRepo(projectId: string): Promise<string> {
+    const project = await this.getProject(projectId);
+    const repoUrl = project.http_url_to_repo; // Utilisation de l'URL HTTPS
+    const repoDir = path.join('C:', 'Users', 'mhammami2', 'Desktop', 'Gitlab Release', 'repos', projectId.replace('/', '_'));
+
+    if (!fs.existsSync(repoDir)) {
+      await execAsync(`git clone ${repoUrl} "${repoDir}"`);
+    } else {
+      await execAsync(`cd "${repoDir}" && git fetch origin`);
+    }
+
+    return repoDir;
+  }
+
+
+
+  // Met à jour main avec une branche donnée
+  async updateMainFromBranch(projectId: string, branch: string): Promise<string> {
+    try {
+      const repoPath = await this.prepareRepo(projectId);
+      const project = await this.getProject(projectId);
+      const mainBranch = project.default_branch || 'main';
+
+      if (branch === mainBranch) {
+        throw new Error('Impossible de merger la branche principale sur elle-même.');
+      }
+
+      await execAsync(`cd ${repoPath} && git checkout ${mainBranch} && git pull origin ${mainBranch}`);
+      await execAsync(`cd ${repoPath} && git merge origin/${branch}`);
+      await execAsync(`cd ${repoPath} && git push origin ${mainBranch}`);
+
+      return `✔ Projet ${projectId} → branche ${mainBranch} mise à jour avec ${branch}`;
+    } catch (err: any) {
+      throw new Error(`❌ Erreur Git: ${err.message}`);
+    }
+  }
+
+  async createMergeRequestsForUnmergedBranches(id: string | number) {
+    // Récupérer toutes les branches
+    const branches = await this.get(`/projects/${id}/repository/branches`);
+    const mainBranch = 'main';
+    for (const branch of branches) {
+      if (branch.name === mainBranch) continue;
+      // Comparer la branche avec main
+      const compare = await this.get(`/projects/${id}/repository/compare`, {
+        from: branch.name,
+        to: mainBranch,
+      });
+      // S'il y a des commits non fusionnés
+      if (compare.commits && compare.commits.length > 0) {
+        // Créer une merge request
+        await this.post(`/projects/${id}/merge_requests`, {
+          source_branch: branch.name,
+          target_branch: mainBranch,
+          title: `Merge ${branch.name} into ${mainBranch}`,
+        });
+      }
+    }
+  }
+
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import {Controller, Get, Param, Post, Query} from '@nestjs/common';
 import { GitlabService } from './gitlab.service';
 
 @Controller('gitlab')
@@ -163,18 +163,27 @@ export class GitlabController {
 
   // Nouvelle route : Commits depuis le dernier release
   @Get('projects/:id/commits/since-last-release')
-  async commitsSinceLastRelease(
-    @Param('id') id: string
-  ) {
+  async commitsSinceLastRelease(@Param('id') id: string) {
     return this.svc.commitsSinceLastRelease(id);
   }
 
   // Nouvelle route : lister tous les commits d'un projet (aucun filtre)
   @Get('projects/:id/commits')
-  async getAllCommits(
-    @Param('id') id: string
-  ) {
+  async getAllCommits(@Param('id') id: string) {
     return this.svc.get(`/projects/${id}/repository/commits`);
   }
 
+  @Post('update-main/:projectId/:branch')
+  async updateMain(
+      @Param('projectId') projectId: string,
+      @Param('branch') branch: string,
+  ) {
+    return this.svc.updateMainFromBranch(projectId, branch);
+  }
+
+  @Post('projects/:id/merge-unmerged-branches')
+  async mergeUnmergedBranches(@Param('id') id: string) {
+    await this.svc.createMergeRequestsForUnmergedBranches(id);
+    return { message: 'Merge requests créées pour les branches non fusionnées.' };
+  }
 }

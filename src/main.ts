@@ -20,7 +20,7 @@ async function bootstrap(): Promise<void> {
   // rendre le dossier uploads accessible
   app.use('/uploads', express.static(join(__dirname, '..', 'uploads')));
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 3001);
 }
 
 bootstrap();
