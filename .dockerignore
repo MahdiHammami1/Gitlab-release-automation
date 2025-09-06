@@ -1,0 +1,17 @@
+# Ne jamais inclure node_modules, il sera reconstruit dans l’image
+node_modules
+
+# Fichiers sensibles
+.env
+
+# Fichiers de debug/logs
+npm-debug.log
+yarn-error.log
+
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
