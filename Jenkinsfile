@@ -22,7 +22,7 @@ pipeline {
         stage('Docker Build & Push Backend') {
             steps {
                 script {
-                    docker.withRegistry('https://registry.gitlab.com', 'gitlab-docker-creds') {
+                    docker.withRegistry('https://registry.gitlab.com') {
                         // Tag avec le numéro de build Jenkins
                         docker.build("${BACKEND_IMAGE}:${env.BUILD_NUMBER}")
                               .push()
