@@ -6,7 +6,12 @@ pipeline {
     }
 
     stages {
-
+        stage('Checkout') {
+            steps {
+                git branch: 'mahdi',
+                    url: 'https://github.com/MahdiHammami1/Gitlab-release-automation.git'
+            }
+        }
 
         stage('Build Backend') {
             agent {
