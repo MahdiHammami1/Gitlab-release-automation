@@ -1,9 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'node:20-alpine'
-        }
-    }
+    agent any
 
     environment {
         BACKEND_IMAGE = "registry.gitlab.com/mahdihm140/gitlab-release-automation/backend"
@@ -18,6 +14,11 @@ pipeline {
         }
 
         stage('Build Backend') {
+            agent {
+                docker {
+                    image 'node:20-alpine'
+                }
+            }
             steps {
                 sh 'npm ci'
                 sh 'npm run build'
