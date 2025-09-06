@@ -8,7 +8,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'mahdi', url: 'https://github.com/MahdiHammami1/Gitlab-automation-release-back.git'
+                git branch: 'mahdi', url: 'https://github.com/MahdiHammami1/Gitlab-release-automation.git'
             }
         }
 
