@@ -1,5 +1,9 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'node:20-alpine'
+        }
+    }
 
     environment {
         BACKEND_IMAGE = "registry.gitlab.com/mahdihm140/gitlab-release-automation/backend"
@@ -8,7 +12,8 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'mahdi', url: 'https://github.com/MahdiHammami1/Gitlab-release-automation.git'
+                git branch: 'mahdi',
+                    url: 'https://github.com/MahdiHammami1/Gitlab-automation-release-back.git'
             }
         }
 
@@ -22,13 +27,9 @@ pipeline {
         stage('Docker Build & Push Backend') {
             steps {
                 script {
-                    docker.withRegistry('https://registry.gitlab.com') {
-                        // Tag avec le numéro de build Jenkins
-                        docker.build("${BACKEND_IMAGE}:${env.BUILD_NUMBER}")
-                              .push()
-                        // Tag "latest" pour toujours avoir la version la plus récente
-                        docker.build("${BACKEND_IMAGE}:latest")
-                              .push()
+                    docker.withRegistry('https://registry.gitlab.com', 'gitlab-docker-creds') {
+                        docker.build("${BACKEND_IMAGE}:${env.BUILD_NUMBER}").push()
+                        docker.build("${BACKEND_IMAGE}:latest").push()
                     }
                 }
             }
