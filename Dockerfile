@@ -19,7 +19,8 @@ RUN npm install -g prisma
 COPY . .
 
 # Générer les types Prisma (après avoir copié le schema.prisma)
-RUN npx prisma generate
+RUN npx prisma generate --schema=src/prisma/schema.prisma
+
 
 # Exposer le port du backend
 EXPOSE 3000
