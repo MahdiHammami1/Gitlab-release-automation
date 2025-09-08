@@ -1,0 +1,64 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { ArtefactsController } from './artefacts.controller';
+import { ArtefactsService } from './artefacts.service';
+import { CreateArtefactDto } from './dto/create-artefact.dto';
+import { UpdateArtefactDto } from './dto/update-artefact.dto';
+
+describe('ArtefactsController', () => {
+  let controller: ArtefactsController;
+  let serviceMock: any;
+
+  beforeEach(async () => {
+    serviceMock = {
+      create: jest.fn(),
+      findAll: jest.fn(),
+      findOne: jest.fn(),
+      update: jest.fn(),
+      remove: jest.fn(),
+    };
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [ArtefactsController],
+      providers: [
+        { provide: ArtefactsService, useValue: serviceMock },
+      ],
+    }).compile();
+
+    controller = module.get<ArtefactsController>(ArtefactsController);
+  });
+
+  it('should be defined', () => {
+    expect(controller).toBeDefined();
+  });
+
+  it('should create an artefact', async () => {
+    const dto: CreateArtefactDto = { name: 'test' } as any;
+    serviceMock.create.mockResolvedValue({ id: '1', ...dto });
+    await expect(controller.create(dto)).resolves.toEqual({ id: '1', ...dto });
+    expect(serviceMock.create).toHaveBeenCalledWith(dto);
+  });
+
+  it('should find all artefacts', async () => {
+    serviceMock.findAll.mockResolvedValue([{ id: '1', name: 'test' }]);
+    await expect(controller.findAll()).resolves.toEqual([{ id: '1', name: 'test' }]);
+    expect(serviceMock.findAll).toHaveBeenCalled();
+  });
+
+  it('should find one artefact', async () => {
+    serviceMock.findOne.mockResolvedValue({ id: '1', name: 'test' });
+    await expect(controller.findOne('1')).resolves.toEqual({ id: '1', name: 'test' });
+    expect(serviceMock.findOne).toHaveBeenCalledWith('1');
+  });
+
+  it('should update an artefact', async () => {
+    const dto: UpdateArtefactDto = { name: 'updated' } as any;
+    serviceMock.update.mockResolvedValue({ id: '1', ...dto });
+    await expect(controller.update('1', dto)).resolves.toEqual({ id: '1', ...dto });
+    expect(serviceMock.update).toHaveBeenCalledWith('1', dto);
+  });
+
+  it('should remove an artefact', async () => {
+    serviceMock.remove.mockResolvedValue({ id: '1', name: 'deleted' });
+    await expect(controller.remove('1')).resolves.toEqual({ id: '1', name: 'deleted' });
+    expect(serviceMock.remove).toHaveBeenCalledWith('1');
+  });
+});

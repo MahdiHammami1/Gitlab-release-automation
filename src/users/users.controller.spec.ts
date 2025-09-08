@@ -1,0 +1,61 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { UsersController } from './users.controller';
+import { UsersService } from './users.service';
+
+describe('UsersController', () => {
+  let controller: UsersController;
+
+  let service: UsersService;
+
+  let serviceMock: any;
+
+  beforeEach(async () => {
+    serviceMock = {
+      findAll: jest.fn(),
+      findOne: jest.fn(),
+      create: jest.fn(),
+      remove: jest.fn(),
+    };
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [UsersController],
+      providers: [
+        { provide: UsersService, useValue: serviceMock },
+      ],
+    }).compile();
+
+    controller = module.get<UsersController>(UsersController);
+    service = module.get<UsersService>(UsersService);
+  });
+
+  it('should be defined', () => {
+    expect(controller).toBeDefined();
+  });
+
+  it('should return all users', async () => {
+    const users = [{ id: '1', email: 'john@example.com', username: 'john', gitlabId: '123', accessToken: 'token', refreshToken: null, createdAt: new Date(), updatedAt: new Date() }];
+    serviceMock.findAll.mockResolvedValue(users);
+    await expect(controller.findAll()).resolves.toEqual(users);
+    expect(serviceMock.findAll).toHaveBeenCalled();
+  });
+
+  it('should return one user', async () => {
+    const user = { id: '1', email: 'john@example.com', username: 'john', gitlabId: '123', accessToken: 'token', refreshToken: null, createdAt: new Date(), updatedAt: new Date() };
+    serviceMock.findOne.mockResolvedValue(user);
+    await expect(controller.findOne('1')).resolves.toEqual(user);
+    expect(serviceMock.findOne).toHaveBeenCalledWith(1);
+  });
+
+  it('should create a user', async () => {
+    const dto = { email: 'john@example.com', username: 'john', gitlabId: 123, accessToken: 'token' };
+    const user = { id: '1', ...dto, refreshToken: null, createdAt: new Date(), updatedAt: new Date() };
+    serviceMock.create.mockResolvedValue(user);
+    await expect(controller.create(dto)).resolves.toEqual(user);
+    expect(serviceMock.create).toHaveBeenCalledWith(dto);
+  });
+
+  it('should remove a user', async () => {
+    serviceMock.remove.mockResolvedValue(undefined);
+    await expect(controller.remove('1')).resolves.toBeUndefined();
+    expect(serviceMock.remove).toHaveBeenCalledWith('1');
+  });
+});
