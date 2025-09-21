@@ -11,36 +11,23 @@ pipeline {
         ALLOW_INSECURE_SSL = "false"
 
         // Variables sécurisées depuis Jenkins Credentials
-        GITLAB_PAT = credentials('gitlab-pat')       // 🔒 PAT GitLab stocké dans Jenkins
-        DATABASE_URL = credentials('mongo-url')      // 🔒 MongoDB URL stockée dans Jenkins
+        GITLAB_PAT   = credentials('gitlab-pat')   // 🔒 PAT GitLab
+        DATABASE_URL = credentials('mongo-url')    // 🔒 MongoDB URL
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                sh '''
-                  rm -rf repo
-                  git clone -b mahdi https://github.com/MahdiHammami1/Gitlab-release-automation.git repo
-                '''
-            }
-        }
-
         stage('Build Backend') {
             agent {
                 docker { image 'node:20' }
             }
             steps {
-                dir('repo') {
-                    sh '''
-                      npm config set cache /var/jenkins_home/.npm-cache --global
-                      npm install
-                      npx prisma generate --schema=src/prisma/schema.prisma
-                      npm run build
-                    '''
-                }
+                sh '''
+                  npm config set cache /var/jenkins_home/.npm-cache --global
+                  npm install
+                  npx prisma generate --schema=src/prisma/schema.prisma
+                  npm run build
+                '''
             }
         }
-
-
     }
 }
