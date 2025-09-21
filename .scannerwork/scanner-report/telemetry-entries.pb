@@ -3,6 +3,6 @@
  text.analyzed_hidden_files_count0#
 javascript.runtime.version22.115
 )javascript.runtime.node-executable-originembedded'
-!text.all_tracked_text_files_count80$
-text.sensor_time_ms_community609
+!text.all_tracked_text_files_count80%
+text.sensor_time_ms_community1333
 text.analyzed_files_count79
