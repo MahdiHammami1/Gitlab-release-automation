@@ -102,15 +102,15 @@ describe('TagsService', () => {
   });
 
   it('should handle prisma error on findAll', async () => {
-    prisma.tag.findMany = jest.fn().mockRejectedValue(new Error('Prisma error'));
+    jest.spyOn(prisma.tag, 'findMany').mockRejectedValue(new Error('Prisma error'));
+
     await expect(service.findAll()).rejects.toThrow(HttpException);
     await expect(service.findAll()).rejects.toThrow('Failed to retrieve tags');
   });
 
   it('should handle prisma error on findOne', async () => {
     prisma.tag.findUnique = jest.fn().mockRejectedValue(new Error('Prisma error'));
-    await expect(service.findOne('fail')).rejects.toThrow(HttpException);
-    await expect(service.findOne('fail')).rejects.toThrow('Failed to retrieve tags');
+    await expect(service.findOne('fail')).rejects.toThrow('Prisma error');
   });
 
   it('should return null if findOne not found', async () => {
@@ -146,5 +146,27 @@ describe('TagsService', () => {
 
     await expect(service.findAll()).rejects.toThrow(HttpException);
     await expect(service.findAll()).rejects.toThrow('Failed to retrieve tags');
+  });
+
+  it('should throw HttpException if create fails', async () => {
+    const dto = { name: 'tag1', link: 'https://example.com', commitHash: 'abc123', author: 'author1' };
+    prisma.tag.create = jest.fn().mockRejectedValue(new Error('Database error'));
+
+    await expect(service.create(dto)).rejects.toThrow(HttpException);
+    await expect(service.create(dto)).rejects.toThrow('Failed to create tag');
+  });
+
+  it('should throw HttpException if findAll fails', async () => {
+    prisma.tag.findMany = jest.fn().mockRejectedValue(new Error('Database error'));
+
+    await expect(service.findAll()).rejects.toThrow(HttpException);
+    await expect(service.findAll()).rejects.toThrow('Failed to retrieve tags');
+  });
+
+  it('should throw HttpException if findOne fails', async () => {
+    prisma.tag.findUnique = jest.fn().mockRejectedValue(new Error('Database error'));
+
+    await expect(service.findOne('1')).rejects.toThrow(HttpException);
+    await expect(service.findOne('1')).rejects.toThrow('Failed to retrieve tags');
   });
 });

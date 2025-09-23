@@ -78,7 +78,8 @@ describe('UsersController', () => {
   });
 
   it('should handle error on findAll', async () => {
-    serviceMock.findAll.mockRejectedValue(new Error('Service error'));
+    jest.spyOn(serviceMock, 'findAll').mockRejectedValue(new Error('Service error'));
+
     await expect(controller.findAll()).rejects.toThrow('Service error');
   });
 

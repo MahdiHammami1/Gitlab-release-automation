@@ -119,5 +119,26 @@ describe('ArtefactsService', () => {
     await expect(service.findAll()).rejects.toThrow('Failed to retrieve artefacts');
   });
 
+  it('should throw HttpException if create fails', async () => {
+    prisma.artefact.create = jest.fn().mockRejectedValue(new Error('Database error'));
+
+    await expect(service.create({ name: 'test' })).rejects.toThrow(HttpException);
+    await expect(service.create({ name: 'test' })).rejects.toThrow('Failed to create artefact');
+  });
+
+  it('should throw HttpException if findAll fails', async () => {
+    prisma.artefact.findMany = jest.fn().mockRejectedValue(new Error('Database error'));
+
+    await expect(service.findAll()).rejects.toThrow(HttpException);
+    await expect(service.findAll()).rejects.toThrow('Failed to retrieve artefacts');
+  });
+
+  it('should throw HttpException if findOne fails', async () => {
+    prisma.artefact.findUnique = jest.fn().mockRejectedValue(new Error('Database error'));
+
+    await expect(service.findOne('1')).rejects.toThrow(HttpException);
+    await expect(service.findOne('1')).rejects.toThrow('Failed to retrieve artefact');
+  });
+
   // Ajouter ici des tests pour chaque méthode publique du service
 });
