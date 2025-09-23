@@ -52,7 +52,8 @@ describe('TagsService', () => {
 
   it('should throw error if name is missing when creating a tag', async () => {
     const dto = { link: 'https://repo.url', commitHash: 'abc123', author: 'author1' };
-    await expect(() => service.create(dto as any)).toThrow('Le champ name est obligatoire pour créer un tag.');
+    await expect(service.create(dto as any)).rejects.toThrow(HttpException);
+    await expect(service.create(dto as any)).rejects.toThrow('Le champ name est obligatoire pour créer un tag.');
   });
 
   it('should find all tags', async () => {
@@ -83,18 +84,21 @@ describe('TagsService', () => {
   it('should handle prisma error on create', async () => {
     const dto = { name: 'fail', link: 'https://repo.url', commitHash: 'abc123', author: 'author1' };
     prisma.tag.create = jest.fn().mockRejectedValue(new Error('Prisma error'));
-    await expect(service.create(dto)).rejects.toThrow('Prisma error');
+    await expect(service.create(dto)).rejects.toThrow(HttpException);
+    await expect(service.create(dto)).rejects.toThrow('Failed to create tag');
   });
 
   it('should handle prisma error on update', async () => {
     const dto = { name: 'fail', link: 'https://repo.url', commitHash: 'abc123', author: 'author1' };
     prisma.tag.update = jest.fn().mockRejectedValue(new Error('Prisma error'));
-    await expect(service.update('1', dto)).rejects.toThrow('Prisma error');
+    await expect(service.update('1', dto)).rejects.toThrow(HttpException);
+    await expect(service.update('1', dto)).rejects.toThrow('Failed to update tag');
   });
 
   it('should handle prisma error on remove', async () => {
     prisma.tag.delete = jest.fn().mockRejectedValue(new Error('Prisma error'));
-    await expect(service.remove('1')).rejects.toThrow('Prisma error');
+    await expect(service.remove('1')).rejects.toThrow(HttpException);
+    await expect(service.remove('1')).rejects.toThrow('Failed to delete tag');
   });
 
   it('should handle prisma error on findAll', async () => {
@@ -132,5 +136,14 @@ describe('TagsService', () => {
 
   it('should throw error for invalid GitLab URL in createFromGitlab', async () => {
     await expect(service.createFromGitlab('https://notgitlab.com/repo.git', 'v1.0.0')).rejects.toThrow('URL GitLab invalide');
+  });
+
+  it('should throw HttpException if DB fails on findAll', async () => {
+    prisma.tag.findMany = jest.fn().mockImplementation(() => {
+      throw new Error('DB error');
+    });
+
+    await expect(service.findAll()).rejects.toThrow(HttpException);
+    await expect(service.findAll()).rejects.toThrow('Failed to retrieve tags');
   });
 });

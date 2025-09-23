@@ -69,7 +69,8 @@ describe('ArtefactsService', () => {
   it('should handle error on update', async () => {
     const dto: UpdateArtefactDto = { name: 'updated' } as any;
     prisma.artefact.update = jest.fn().mockRejectedValue(new Error('Not found'));
-    await expect(service.update('999', dto)).rejects.toThrow('Not found');
+    await expect(service.update('999', dto)).rejects.toThrow(HttpException);
+    await expect(service.update('999', dto)).rejects.toThrow('Failed to update artefact');
   });
 
   it('should remove an artefact', async () => {
@@ -80,13 +81,15 @@ describe('ArtefactsService', () => {
 
   it('should handle error on remove', async () => {
     prisma.artefact.delete = jest.fn().mockRejectedValue(new Error('Not found'));
-    await expect(service.remove('999')).rejects.toThrow('Not found');
+    await expect(service.remove('999')).rejects.toThrow(HttpException);
+    await expect(service.remove('999')).rejects.toThrow('Failed to delete artefact');
   });
 
   it('should handle error on create', async () => {
     const dto: CreateArtefactDto = { name: 'fail' } as any;
     prisma.artefact.create = jest.fn().mockRejectedValue(new Error('DB error'));
-    await expect(service.create(dto)).rejects.toThrow('DB error');
+    await expect(service.create(dto)).rejects.toThrow(HttpException);
+    await expect(service.create(dto)).rejects.toThrow('Failed to create artefact');
   });
 
   it('should handle error on findAll', async () => {
@@ -97,11 +100,21 @@ describe('ArtefactsService', () => {
 
   it('should handle error on findOne', async () => {
     prisma.artefact.findUnique = jest.fn().mockRejectedValue(new Error('DB error'));
-    await expect(service.findOne('fail')).rejects.toThrow('DB error');
+    await expect(service.findOne('fail')).rejects.toThrow(HttpException);
+    await expect(service.findOne('fail')).rejects.toThrow('Failed to retrieve artefact');
   });
 
   it('should propagate unknown errors', async () => {
     prisma.artefact.findMany = jest.fn().mockImplementation(() => { throw new Error('Unknown'); });
+    await expect(service.findAll()).rejects.toThrow(HttpException);
+    await expect(service.findAll()).rejects.toThrow('Failed to retrieve artefacts');
+  });
+
+  it('should throw HttpException if DB fails on findAll', async () => {
+    prisma.artefact.findMany = jest.fn().mockImplementation(() => {
+      throw new Error('DB error');
+    });
+
     await expect(service.findAll()).rejects.toThrow(HttpException);
     await expect(service.findAll()).rejects.toThrow('Failed to retrieve artefacts');
   });

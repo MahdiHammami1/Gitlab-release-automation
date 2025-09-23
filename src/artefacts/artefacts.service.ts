@@ -7,8 +7,17 @@ import { UpdateArtefactDto } from './dto/update-artefact.dto';
 export class ArtefactsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  create(data: CreateArtefactDto) {
-    return this.prisma.artefact.create({ data });
+  async create(data: CreateArtefactDto) {
+    try {
+      return await this.prisma.artefact.create({ data });
+    } catch (error) {
+      console.error('Database error:', error);
+      if (error instanceof HttpException) throw error;
+      throw new HttpException(
+        'Failed to create artefact',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   async findAll() {
@@ -24,15 +33,42 @@ export class ArtefactsService {
     }
   }
 
-  findOne(id: string) {
-    return this.prisma.artefact.findUnique({ where: { id } });
+  async findOne(id: string) {
+    try {
+      return await this.prisma.artefact.findUnique({ where: { id } });
+    } catch (error) {
+      console.error('Database error:', error);
+      if (error instanceof HttpException) throw error;
+      throw new HttpException(
+        'Failed to retrieve artefact',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
-  update(id: string, data: UpdateArtefactDto) {
-    return this.prisma.artefact.update({ where: { id }, data });
+  async update(id: string, data: UpdateArtefactDto) {
+    try {
+      return await this.prisma.artefact.update({ where: { id }, data });
+    } catch (error) {
+      console.error('Database error:', error);
+      if (error instanceof HttpException) throw error;
+      throw new HttpException(
+        'Failed to update artefact',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
-  remove(id: string) {
-    return this.prisma.artefact.delete({ where: { id } });
+  async remove(id: string) {
+    try {
+      return await this.prisma.artefact.delete({ where: { id } });
+    } catch (error) {
+      console.error('Database error:', error);
+      if (error instanceof HttpException) throw error;
+      throw new HttpException(
+        'Failed to delete artefact',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 }

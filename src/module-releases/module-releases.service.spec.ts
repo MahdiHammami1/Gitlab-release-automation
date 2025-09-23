@@ -87,7 +87,8 @@ describe('ModuleReleasesService', () => {
   it('should handle error on create', async () => {
     const dto = { name: 'fail' } as any;
     prisma.moduleRelease.create = jest.fn().mockRejectedValue(new Error('DB error'));
-    await expect(service.create(dto)).rejects.toThrow('DB error');
+    await expect(service.create(dto)).rejects.toThrow(HttpException);
+    await expect(service.create(dto)).rejects.toThrow('Failed to retrieve module releases');
   });
 
   it('should handle error on findAll', async () => {
@@ -98,7 +99,8 @@ describe('ModuleReleasesService', () => {
 
   it('should handle error on findOne', async () => {
     prisma.moduleRelease.findUnique = jest.fn().mockRejectedValue(new Error('DB error'));
-    await expect(service.findOne('fail')).rejects.toThrow('DB error');
+    await expect(service.findOne('fail')).rejects.toThrow(HttpException);
+    await expect(service.findOne('fail')).rejects.toThrow('Failed to retrieve module releases');
   });
 
   it('should return null if findOne not found', async () => {
@@ -109,7 +111,8 @@ describe('ModuleReleasesService', () => {
   it('should handle error on update', async () => {
     const dto = { name: 'fail' } as any;
     prisma.moduleRelease.update = jest.fn().mockRejectedValue(new Error('DB error'));
-    await expect(service.update('999', dto)).rejects.toThrow('DB error');
+    await expect(service.update('999', dto)).rejects.toThrow(HttpException);
+    await expect(service.update('999', dto)).rejects.toThrow('Failed to retrieve module releases');
   });
 
   it('should return null if update not found', async () => {
@@ -120,7 +123,8 @@ describe('ModuleReleasesService', () => {
 
   it('should handle error on remove', async () => {
     prisma.moduleRelease.delete = jest.fn().mockRejectedValue(new Error('DB error'));
-    await expect(service.remove('999')).rejects.toThrow('DB error');
+    await expect(service.remove('999')).rejects.toThrow(HttpException);
+    await expect(service.remove('999')).rejects.toThrow('Failed to retrieve module releases');
   });
 
   it('should return null if remove not found', async () => {
@@ -130,11 +134,15 @@ describe('ModuleReleasesService', () => {
 
   it('should handle error on exists', async () => {
     prisma.moduleRelease.findFirst = jest.fn().mockRejectedValue(new Error('DB error'));
-    await expect(service.exists({ moduleId: 'm1', tagId: 't1', releaseId: 'r1' })).rejects.toThrow('DB error');
+    await expect(service.exists({ moduleId: 'm1', tagId: 't1', releaseId: 'r1' })).rejects.toThrow(HttpException);
+    await expect(service.exists({ moduleId: 'm1', tagId: 't1', releaseId: 'r1' })).rejects.toThrow('Failed to retrieve module releases');
   });
 
   it('should throw HttpException if DB fails on findAll', async () => {
-    prisma.moduleRelease.findMany = jest.fn().mockImplementation(() => { throw new Error('DB error'); });
+    prisma.moduleRelease.findMany = jest.fn().mockImplementation(() => {
+      throw new Error('DB error');
+    });
+
     await expect(service.findAll()).rejects.toThrow(HttpException);
     await expect(service.findAll()).rejects.toThrow('Failed to retrieve module releases');
   });

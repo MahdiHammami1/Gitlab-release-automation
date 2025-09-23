@@ -12,11 +12,23 @@ export class TagsService {
     private readonly httpService: HttpService
   ) {}
 
-  create(data: CreateTagDto) {
-    if (!data.name) {
-      throw new Error('Le champ name est obligatoire pour créer un tag.');
+  async create(data: CreateTagDto) {
+    try {
+      if (!data.name) {
+        throw new HttpException(
+          'Le champ name est obligatoire pour créer un tag.',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      return await this.prisma.tag.create({ data });
+    } catch (error) {
+      console.error('Database error:', error);
+      if (error instanceof HttpException) throw error;
+      throw new HttpException(
+        'Failed to create tag',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
-    return this.prisma.tag.create({ data });
   }
 
   async findAll() {
@@ -32,16 +44,43 @@ export class TagsService {
     }
   }
 
-  findOne(id: string) {
-    return this.prisma.tag.findUnique({ where: { id } });
+  async findOne(id: string) {
+    try {
+      return await this.prisma.tag.findUnique({ where: { id } });
+    } catch (error) {
+      console.error('Database error:', error);
+      if (error instanceof HttpException) throw error;
+      throw new HttpException(
+        'Failed to retrieve tags',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
-  update(id: string, data: UpdateTagDto) {
-    return this.prisma.tag.update({ where: { id }, data });
+  async update(id: string, data: UpdateTagDto) {
+    try {
+      return await this.prisma.tag.update({ where: { id }, data });
+    } catch (error) {
+      console.error('Database error:', error);
+      if (error instanceof HttpException) throw error;
+      throw new HttpException(
+        'Failed to update tag',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
-  remove(id: string) {
-    return this.prisma.tag.delete({ where: { id } });
+  async remove(id: string) {
+    try {
+      return await this.prisma.tag.delete({ where: { id } });
+    } catch (error) {
+      console.error('Database error:', error);
+      if (error instanceof HttpException) throw error;
+      throw new HttpException(
+        'Failed to delete tag',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
   /**
    * Crée un tag à partir d'un repo GitLab et d'un tagName
@@ -49,48 +88,64 @@ export class TagsService {
    * @param tagName le nom du tag GitLab (ex: v1.0.0)
    */
   async createFromGitlab(repoUrl: string, tagName: string) {
-    // Extraire chemin du projet
-    const match = repoUrl.match(/gitlab\.com\/([^/]+\/[^/]+)(?:\.git)?$/);
-    if (!match) {
-      throw new HttpException('URL GitLab invalide', HttpStatus.BAD_REQUEST);
-    }
-    const projectPath = match[1];
-
-    // Construire URL proxy GitLab
-    const apiUrl = `http://localhost:3000/gitlab/projects/${encodeURIComponent(
-        projectPath
-    )}/repository/tags/${encodeURIComponent(tagName)}`;
-
-    let tag;
     try {
-      const response = await firstValueFrom(this.httpService.get(apiUrl));
-      tag = response.data;
+      // Vérifie si l'URL est une URL GitLab valide
+      if (!repoUrl.includes('gitlab')) {
+        throw new HttpException(
+          'URL GitLab invalide',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      // Extraire chemin du projet
+      const match = repoUrl.match(/gitlab\.com\/([^/]+\/[^/]+)(?:\.git)?$/);
+      if (!match) {
+        throw new HttpException('URL GitLab invalide', HttpStatus.BAD_REQUEST);
+      }
+      const projectPath = match[1];
+
+      // Construire URL proxy GitLab
+      const apiUrl = `http://localhost:3000/gitlab/projects/${encodeURIComponent(
+          projectPath
+      )}/repository/tags/${encodeURIComponent(tagName)}`;
+
+      let tag;
+      try {
+        const response = await firstValueFrom(this.httpService.get(apiUrl));
+        tag = response.data;
+      } catch (error) {
+        console.error('Erreur API GitLab:', apiUrl, error?.response?.data || error.message);
+        throw new HttpException(
+            error?.response?.data?.message || 'Erreur GitLab API',
+            error?.response?.status || HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+
+      if (!tag || !tag.name) {
+        throw new HttpException('Tag GitLab introuvable', HttpStatus.NOT_FOUND);
+      }
+
+      // Vérifier en DB
+      const existing = await this.prisma.tag.findFirst({
+        where: { name: tag.name, commitHash: tag.commit.id },
+      });
+      if (existing) return existing;
+
+      // Créer en DB
+      return this.prisma.tag.create({
+        data: {
+          name: tag.name,
+          link: `https://gitlab.com/${projectPath}/-/commit/${tag.commit.id}`,
+          commitHash: tag.commit.id,
+          author: tag.commit.author_name,
+        },
+      });
     } catch (error) {
-      console.error('Erreur API GitLab:', apiUrl, error?.response?.data || error.message);
+      console.error('GitLab API error:', error);
+      if (error instanceof HttpException) throw error;
       throw new HttpException(
-          error?.response?.data?.message || 'Erreur GitLab API',
-          error?.response?.status || HttpStatus.INTERNAL_SERVER_ERROR,
+        'Failed to retrieve tags',
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
-
-    if (!tag || !tag.name) {
-      throw new HttpException('Tag GitLab introuvable', HttpStatus.NOT_FOUND);
-    }
-
-    // Vérifier en DB
-    const existing = await this.prisma.tag.findFirst({
-      where: { name: tag.name, commitHash: tag.commit.id },
-    });
-    if (existing) return existing;
-
-    // Créer en DB
-    return this.prisma.tag.create({
-      data: {
-        name: tag.name,
-        link: `https://gitlab.com/${projectPath}/-/commit/${tag.commit.id}`,
-        commitHash: tag.commit.id,
-        author: tag.commit.author_name,
-      },
-    });
   }
 }

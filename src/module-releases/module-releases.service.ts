@@ -7,8 +7,17 @@ import { UpdateModuleReleaseDto } from './dto/update-module-release.dto';
 export class ModuleReleasesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  create(data: CreateModuleReleaseDto) {
-    return this.prisma.moduleRelease.create({ data });
+  async create(data: CreateModuleReleaseDto) {
+    try {
+      return await this.prisma.moduleRelease.create({ data });
+    } catch (error) {
+      console.error('Database error:', error);
+      if (error instanceof HttpException) throw error;
+      throw new HttpException(
+        'Failed to retrieve module releases',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   async findAll() {
@@ -31,37 +40,63 @@ export class ModuleReleasesService {
     }
   }
 
-
-  findOne(id: string) {
-    return this.prisma.moduleRelease.findUnique({
-      where: { id },
-      include: {
-        module: true,
-        tag: true,
-        artefacts: true,
-        release: true,
-      },
-    });
+  async findOne(id: string) {
+    try {
+      return await this.prisma.moduleRelease.findUnique({
+        where: { id },
+        include: {
+          module: true,
+          tag: true,
+          artefacts: true,
+          release: true,
+        },
+      });
+    } catch (error) {
+      console.error('Database error:', error);
+      if (error instanceof HttpException) throw error;
+      throw new HttpException(
+        'Failed to retrieve module releases',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
-  update(id: string, data: UpdateModuleReleaseDto) {
-    return this.prisma.moduleRelease.update({ where: { id }, data });
+  async update(id: string, data: UpdateModuleReleaseDto) {
+    try {
+      return await this.prisma.moduleRelease.update({ where: { id }, data });
+    } catch (error) {
+      console.error('Database error:', error);
+      if (error instanceof HttpException) throw error;
+      throw new HttpException(
+        'Failed to retrieve module releases',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
-  remove(id: string) {
-    return this.prisma.moduleRelease.delete({ where: { id } });
+  async remove(id: string) {
+    try {
+      return await this.prisma.moduleRelease.delete({ where: { id } });
+    } catch (error) {
+      console.error('Database error:', error);
+      if (error instanceof HttpException) throw error;
+      throw new HttpException(
+        'Failed to retrieve module releases',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
-  /**
-   * Vérifie si un module release existe déjà avec les mêmes clés
-   */
-  async exists(dto: { moduleId: string; tagId: string; releaseId?: string }) {
-    return this.prisma.moduleRelease.findFirst({
-      where: {
-        moduleId: dto.moduleId,
-        tagId: dto.tagId,
-        releaseId: dto.releaseId ?? undefined,
-      },
-    });
+  async exists(where: { moduleId: string; tagId: string; releaseId: string }) {
+    try {
+      return await this.prisma.moduleRelease.findFirst({ where });
+    } catch (error) {
+      console.error('Database error:', error);
+      if (error instanceof HttpException) throw error;
+      throw new HttpException(
+        'Failed to retrieve module releases',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 }

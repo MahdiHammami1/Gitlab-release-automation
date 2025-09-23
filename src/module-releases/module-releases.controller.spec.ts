@@ -30,17 +30,20 @@ describe('ModuleReleasesController', () => {
 
   it('should create a module release if not exists', async () => {
     serviceMock.exists = jest.fn().mockResolvedValue(null);
-    serviceMock.create = jest.fn().mockResolvedValue({ id: '1', name: 'release1', moduleId: 'm1', tagId: 't1' });
-    const dto = { name: 'release1', moduleId: 'm1', tagId: 't1' };
-    await expect(controller.create(dto)).resolves.toEqual({ id: '1', name: 'release1', moduleId: 'm1', tagId: 't1' });
+    serviceMock.create = jest.fn().mockResolvedValue({ id: '1', name: 'release1', moduleId: 'm1', tagId: 't1', releaseId: 'r1' });
+    const dto = { name: 'release1', moduleId: 'm1', tagId: 't1', releaseId: 'r1' };
+    await expect(controller.create(dto)).resolves.toEqual({ id: '1', name: 'release1', moduleId: 'm1', tagId: 't1', releaseId: 'r1' });
     expect(serviceMock.exists).toHaveBeenCalledWith(dto);
     expect(serviceMock.create).toHaveBeenCalledWith(dto);
   });
 
   it('should return existing module release if exists', async () => {
-    serviceMock.exists = jest.fn().mockResolvedValue({ id: '1', name: 'release1', moduleId: 'm1', tagId: 't1' });
-    const dto = { name: 'release1', moduleId: 'm1', tagId: 't1' };
-    await expect(controller.create(dto)).resolves.toEqual({ message: 'ModuleRelease déjà existant', moduleRelease: { id: '1', name: 'release1', moduleId: 'm1', tagId: 't1' } });
+    serviceMock.exists = jest.fn().mockResolvedValue({ id: '1', name: 'release1', moduleId: 'm1', tagId: 't1', releaseId: 'r1' });
+    const dto = { name: 'release1', moduleId: 'm1', tagId: 't1', releaseId: 'r1' };
+    await expect(controller.create(dto)).resolves.toEqual({
+      message: 'ModuleRelease déjà existant',
+      moduleRelease: { id: '1', name: 'release1', moduleId: 'm1', tagId: 't1', releaseId: 'r1' }
+    });
     expect(serviceMock.exists).toHaveBeenCalledWith(dto);
   });
 
@@ -57,9 +60,9 @@ describe('ModuleReleasesController', () => {
   });
 
   it('should update a module release', async () => {
-    serviceMock.update = jest.fn().mockResolvedValue({ id: '1', name: 'updated', moduleId: 'm1', tagId: 't1' });
-    const dto = { name: 'updated', moduleId: 'm1', tagId: 't1' };
-    await expect(controller.update('1', dto)).resolves.toEqual({ id: '1', name: 'updated', moduleId: 'm1', tagId: 't1' });
+    serviceMock.update = jest.fn().mockResolvedValue({ id: '1', name: 'updated', moduleId: 'm1', tagId: 't1', releaseId: 'r1' });
+    const dto = { name: 'updated', moduleId: 'm1', tagId: 't1', releaseId: 'r1' };
+    await expect(controller.update('1', dto)).resolves.toEqual({ id: '1', name: 'updated', moduleId: 'm1', tagId: 't1', releaseId: 'r1' });
     expect(serviceMock.update).toHaveBeenCalledWith('1', dto);
   });
 
@@ -71,7 +74,7 @@ describe('ModuleReleasesController', () => {
 
   it('should handle error when creating a module release', async () => {
     serviceMock.exists = jest.fn().mockRejectedValue(new Error('Service error'));
-    const dto = { name: 'release1', moduleId: 'm1', tagId: 't1' };
+    const dto = { name: 'release1', moduleId: 'm1', tagId: 't1', releaseId: 'r1' };
     await expect(controller.create(dto)).rejects.toThrow('Service error');
   });
 
@@ -87,7 +90,7 @@ describe('ModuleReleasesController', () => {
 
   it('should handle error when updating a module release', async () => {
     serviceMock.update = jest.fn().mockRejectedValue(new Error('Service error'));
-    const dto = { name: 'updated', moduleId: 'm1', tagId: 't1' };
+    const dto = { name: 'updated', moduleId: 'm1', tagId: 't1', releaseId: 'r1' };
     await expect(controller.update('1', dto)).rejects.toThrow('Service error');
   });
 

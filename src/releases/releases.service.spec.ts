@@ -85,30 +85,34 @@ describe('ReleasesService', () => {
 
   it('should handle prisma error on create', async () => {
     const dto = { name: 'fail', author: 'author1', changelogGlobal: 'changelog' };
-    prisma.release.create = jest.fn().mockRejectedValue(new Error('Prisma error'));
-    await expect(service.create(dto as any)).rejects.toThrow('Prisma error');
+    prisma.release.create = jest.fn().mockRejectedValue(new HttpException('Failed to create release', 500));
+    await expect(service.create(dto as any)).rejects.toThrow(HttpException);
+    await expect(service.create(dto as any)).rejects.toThrow('Failed to create release');
   });
 
   it('should handle prisma error on update', async () => {
     const dto = { name: 'fail' };
-    prisma.release.update = jest.fn().mockRejectedValue(new Error('Prisma error'));
-    await expect(service.update('1', dto)).rejects.toThrow('Prisma error');
+    prisma.release.update = jest.fn().mockRejectedValue(new HttpException('Failed to update release', 500));
+    await expect(service.update('1', dto)).rejects.toThrow(HttpException);
+    await expect(service.update('1', dto)).rejects.toThrow('Failed to update release');
   });
 
   it('should handle prisma error on remove', async () => {
-    prisma.release.delete = jest.fn().mockRejectedValue(new Error('Prisma error'));
-    await expect(service.remove('1')).rejects.toThrow('Prisma error');
+    prisma.release.delete = jest.fn().mockRejectedValue(new HttpException('Failed to delete release', 500));
+    await expect(service.remove('1')).rejects.toThrow(HttpException);
+    await expect(service.remove('1')).rejects.toThrow('Failed to delete release');
   });
 
   it('should handle prisma error on findAll', async () => {
-    prisma.release.findMany = jest.fn().mockRejectedValue(new Error('Prisma error'));
+    prisma.release.findMany = jest.fn().mockRejectedValue(new HttpException('Failed to retrieve releases', 500));
     await expect(service.findAll()).rejects.toThrow(HttpException);
     await expect(service.findAll()).rejects.toThrow('Failed to retrieve releases');
   });
 
   it('should handle prisma error on findOne', async () => {
-    prisma.release.findUnique = jest.fn().mockRejectedValue(new Error('Prisma error'));
-    await expect(service.findOne('fail')).rejects.toThrow('Prisma error');
+    prisma.release.findUnique = jest.fn().mockRejectedValue(new HttpException('Failed to retrieve release', 500));
+    await expect(service.findOne('fail')).rejects.toThrow(HttpException);
+    await expect(service.findOne('fail')).rejects.toThrow('Failed to retrieve release');
   });
 
   it('should return null if findOne not found', async () => {
@@ -129,6 +133,15 @@ describe('ReleasesService', () => {
 
   it('should propagate unknown errors', async () => {
     prisma.release.findMany = jest.fn().mockImplementation(() => { throw new Error('Unknown'); });
+    await expect(service.findAll()).rejects.toThrow(HttpException);
+    await expect(service.findAll()).rejects.toThrow('Failed to retrieve releases');
+  });
+
+  it('should throw HttpException if DB fails on findAll', async () => {
+    prisma.release.findMany = jest.fn().mockImplementation(() => {
+      throw new Error('DB error');
+    });
+
     await expect(service.findAll()).rejects.toThrow(HttpException);
     await expect(service.findAll()).rejects.toThrow('Failed to retrieve releases');
   });
