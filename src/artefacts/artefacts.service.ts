@@ -11,8 +11,12 @@ export class ArtefactsService {
     return this.prisma.artefact.create({ data });
   }
 
-  findAll() {
-    return this.prisma.artefact.findMany();
+  async findAll() {
+    try {
+      return await this.prisma.artefact.findMany();
+    } catch (error) {
+      throw error;
+    }
   }
 
   findOne(id: string) {
@@ -27,4 +31,3 @@ export class ArtefactsService {
     return this.prisma.artefact.delete({ where: { id } });
   }
 }
-

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateModuleReleaseDto } from './dto/create-module-release.dto';
 import { UpdateModuleReleaseDto } from './dto/update-module-release.dto';
@@ -11,15 +11,19 @@ export class ModuleReleasesService {
     return this.prisma.moduleRelease.create({ data });
   }
 
-  findAll() {
-    return this.prisma.moduleRelease.findMany({
-      include: {
-        module: true,
-        tag: true,
-        artefacts: true,
-        release: true,
-      },
-    });
+  async findAll() {
+    try {
+      return await this.prisma.moduleRelease.findMany({
+        include: {
+          module: true,
+          tag: true,
+          artefacts: true,
+          release: true,
+        },
+      });
+    } catch (error) {
+      throw error;
+    }
   }
 
   findOne(id: string) {

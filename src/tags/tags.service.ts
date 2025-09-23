@@ -19,8 +19,12 @@ export class TagsService {
     return this.prisma.tag.create({ data });
   }
 
-  findAll() {
-    return this.prisma.tag.findMany();
+  async findAll() {
+    try {
+      return await this.prisma.tag.findMany();
+    } catch (error) {
+      throw error;
+    }
   }
 
   findOne(id: string) {

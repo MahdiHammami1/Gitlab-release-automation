@@ -26,18 +26,22 @@ export class ReleasesService {
     });
   }
 
-  findAll() {
-    return this.prisma.release.findMany({
-      include: {
-        moduleReleases: {
-          include: {
-            module: true,
-            tag: true,
-            artefacts: true,
+  async findAll() {
+    try {
+      return await this.prisma.release.findMany({
+        include: {
+          moduleReleases: {
+            include: {
+              module: true,
+              tag: true,
+              artefacts: true,
+            },
           },
         },
-      },
-    });
+      });
+    } catch (error) {
+      throw error;
+    }
   }
 
   findOne(id: string) {
