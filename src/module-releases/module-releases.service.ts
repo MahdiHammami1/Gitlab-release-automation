@@ -7,14 +7,14 @@ import { UpdateModuleReleaseDto } from './dto/update-module-release.dto';
 export class ModuleReleasesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: CreateModuleReleaseDto) {
+  async create(dto: CreateModuleReleaseDto) {
     try {
-      return await this.prisma.moduleRelease.create({ data });
+      return await this.prisma.moduleRelease.create({ data: dto });
     } catch (error) {
       console.error('Database error:', error);
       if (error instanceof HttpException) throw error;
       throw new HttpException(
-        'Failed to retrieve module releases',
+        'Failed to create module release',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -87,14 +87,14 @@ export class ModuleReleasesService {
     }
   }
 
-  async exists(where: { moduleId: string; tagId: string; releaseId: string }) {
+  async exists(dto: CreateModuleReleaseDto) {
     try {
-      return await this.prisma.moduleRelease.findFirst({ where });
+      return await this.prisma.moduleRelease.findFirst({ where: dto });
     } catch (error) {
       console.error('Database error:', error);
       if (error instanceof HttpException) throw error;
       throw new HttpException(
-        'Failed to retrieve module releases',
+        'Failed to check existence of module release',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

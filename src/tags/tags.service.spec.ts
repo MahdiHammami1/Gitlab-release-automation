@@ -109,7 +109,8 @@ describe('TagsService', () => {
 
   it('should handle prisma error on findOne', async () => {
     prisma.tag.findUnique = jest.fn().mockRejectedValue(new Error('Prisma error'));
-    await expect(service.findOne('fail')).rejects.toThrow('Prisma error');
+    await expect(service.findOne('fail')).rejects.toThrow(HttpException);
+    await expect(service.findOne('fail')).rejects.toThrow('Failed to retrieve tags');
   });
 
   it('should return null if findOne not found', async () => {
