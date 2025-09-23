@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateModuleDto } from './dto/create-module.dto';
 import { UpdateModuleDto } from './dto/update-module.dto';
@@ -13,8 +13,13 @@ export class ModulesService {
     return this.prisma.module.create({ data });
   }
 
-  findAll() {
-    return this.prisma.module.findMany();
+  async findAll() {
+    try {
+      return await this.prisma.module.findMany();
+    } catch (error) {
+      console.error('Database error:', error);
+      throw new HttpException('Failed to retrieve modules', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   findOne(id: string) {

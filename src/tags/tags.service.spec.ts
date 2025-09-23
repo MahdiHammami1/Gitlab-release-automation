@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TagsService } from './tags.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { HttpService } from '@nestjs/axios';
+import { HttpException } from '@nestjs/common';
 
 describe('TagsService', () => {
   let service: TagsService;
@@ -98,7 +99,8 @@ describe('TagsService', () => {
 
   it('should handle prisma error on findAll', async () => {
     prisma.tag.findMany = jest.fn().mockRejectedValue(new Error('Prisma error'));
-    await expect(service.findAll()).rejects.toThrow('Prisma error');
+    await expect(service.findAll()).rejects.toThrow(HttpException);
+    await expect(service.findAll()).rejects.toThrow('Failed to retrieve tags');
   });
 
   it('should handle prisma error on findOne', async () => {
@@ -124,7 +126,8 @@ describe('TagsService', () => {
 
   it('should propagate unknown errors', async () => {
     prisma.tag.findMany = jest.fn().mockImplementation(() => { throw new Error('Unknown'); });
-    await expect(service.findAll()).rejects.toThrow('Unknown');
+    await expect(service.findAll()).rejects.toThrow(HttpException);
+    await expect(service.findAll()).rejects.toThrow('Failed to retrieve tags');
   });
 
   it('should throw error for invalid GitLab URL in createFromGitlab', async () => {

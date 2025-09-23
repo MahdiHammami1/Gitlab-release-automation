@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateArtefactDto } from './dto/create-artefact.dto';
 import { UpdateArtefactDto } from './dto/update-artefact.dto';
@@ -15,7 +15,12 @@ export class ArtefactsService {
     try {
       return await this.prisma.artefact.findMany();
     } catch (error) {
-      throw error;
+      console.error('Database error:', error);
+      if (error instanceof HttpException) throw error;
+      throw new HttpException(
+        'Failed to retrieve artefacts',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 

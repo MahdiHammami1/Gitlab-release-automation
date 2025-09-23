@@ -23,7 +23,12 @@ export class TagsService {
     try {
       return await this.prisma.tag.findMany();
     } catch (error) {
-      throw error;
+      console.error('Database error:', error);
+      if (error instanceof HttpException) throw error;
+      throw new HttpException(
+        'Failed to retrieve tags',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 

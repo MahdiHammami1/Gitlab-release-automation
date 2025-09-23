@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ReleasesService } from './releases.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { HttpException } from '@nestjs/common';
 
 describe('ReleasesService', () => {
   let service: ReleasesService;
@@ -101,7 +102,8 @@ describe('ReleasesService', () => {
 
   it('should handle prisma error on findAll', async () => {
     prisma.release.findMany = jest.fn().mockRejectedValue(new Error('Prisma error'));
-    await expect(service.findAll()).rejects.toThrow('Prisma error');
+    await expect(service.findAll()).rejects.toThrow(HttpException);
+    await expect(service.findAll()).rejects.toThrow('Failed to retrieve releases');
   });
 
   it('should handle prisma error on findOne', async () => {
@@ -127,6 +129,7 @@ describe('ReleasesService', () => {
 
   it('should propagate unknown errors', async () => {
     prisma.release.findMany = jest.fn().mockImplementation(() => { throw new Error('Unknown'); });
-    await expect(service.findAll()).rejects.toThrow('Unknown');
+    await expect(service.findAll()).rejects.toThrow(HttpException);
+    await expect(service.findAll()).rejects.toThrow('Failed to retrieve releases');
   });
 });

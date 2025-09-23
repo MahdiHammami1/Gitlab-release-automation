@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateReleaseDto } from './dto/create-release.dto';
 import { UpdateReleaseDto } from './dto/update-release.dto';
@@ -40,7 +40,12 @@ export class ReleasesService {
         },
       });
     } catch (error) {
-      throw error;
+      console.error('Database error:', error);
+      if (error instanceof HttpException) throw error;
+      throw new HttpException(
+        'Failed to retrieve releases',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 

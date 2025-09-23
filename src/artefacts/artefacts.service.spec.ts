@@ -3,6 +3,7 @@ import { ArtefactsService } from './artefacts.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateArtefactDto } from './dto/create-artefact.dto';
 import { UpdateArtefactDto } from './dto/update-artefact.dto';
+import { HttpException } from '@nestjs/common';
 
 describe('ArtefactsService', () => {
   let service: ArtefactsService;
@@ -90,7 +91,8 @@ describe('ArtefactsService', () => {
 
   it('should handle error on findAll', async () => {
     prisma.artefact.findMany = jest.fn().mockRejectedValue(new Error('DB error'));
-    await expect(service.findAll()).rejects.toThrow('DB error');
+    await expect(service.findAll()).rejects.toThrow(HttpException);
+    await expect(service.findAll()).rejects.toThrow('Failed to retrieve artefacts');
   });
 
   it('should handle error on findOne', async () => {
@@ -100,7 +102,8 @@ describe('ArtefactsService', () => {
 
   it('should propagate unknown errors', async () => {
     prisma.artefact.findMany = jest.fn().mockImplementation(() => { throw new Error('Unknown'); });
-    await expect(service.findAll()).rejects.toThrow('Unknown');
+    await expect(service.findAll()).rejects.toThrow(HttpException);
+    await expect(service.findAll()).rejects.toThrow('Failed to retrieve artefacts');
   });
 
   // Ajouter ici des tests pour chaque méthode publique du service

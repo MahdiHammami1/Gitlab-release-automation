@@ -22,9 +22,15 @@ export class ModuleReleasesService {
         },
       });
     } catch (error) {
-      throw error;
+      console.error('Database error:', error);
+      if (error instanceof HttpException) throw error;
+      throw new HttpException(
+        'Failed to retrieve module releases',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
+
 
   findOne(id: string) {
     return this.prisma.moduleRelease.findUnique({
