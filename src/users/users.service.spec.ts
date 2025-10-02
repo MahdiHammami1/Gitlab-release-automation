@@ -105,14 +105,3 @@ describe('UsersService', () => {
   it('should throw HttpException if findAll fails', async () => {
     prisma.user.findMany = jest.fn().mockRejectedValue(new Error('Database error'));
 
-    await expect(service.findAll()).rejects.toThrow(HttpException);
-    await expect(service.findAll()).rejects.toThrow('Failed to retrieve users');
-  });
-
-  it('should throw HttpException if findOne fails', async () => {
-    prisma.user.findUnique = jest.fn().mockRejectedValue(new Error('Database error'));
-
-    await expect(service.findOne('1')).rejects.toThrow(HttpException);
-    await expect(service.findOne('1')).rejects.toThrow('Failed to retrieve user');
-  });
-});

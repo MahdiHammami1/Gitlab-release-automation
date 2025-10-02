@@ -1,1 +1,1 @@
- 2tsX(hr1src/module-releases/module-releases.controller.ts
+ 2tsX.hr1src/module-releases/module-releases.controller.ts

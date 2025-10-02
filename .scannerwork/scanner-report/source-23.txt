@@ -10,10 +10,16 @@ export class ModuleReleasesController {
   @Post()
   async create(@Body() createModuleReleaseDto: CreateModuleReleaseDto) {
     // Vérification d'existence avant création
-    const exists = await this.moduleReleasesService.exists(createModuleReleaseDto);
+    const exists = await this.moduleReleasesService.exists({
+      moduleId: createModuleReleaseDto.moduleId,
+      tagId: createModuleReleaseDto.tagId,
+      releaseId: createModuleReleaseDto.releaseId
+    });
+
     if (exists) {
       return { message: 'ModuleRelease déjà existant', moduleRelease: exists };
     }
+
     return this.moduleReleasesService.create(createModuleReleaseDto);
   }
 

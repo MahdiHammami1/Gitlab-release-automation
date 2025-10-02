@@ -1,1 +1,1 @@
-; (2tsXhr src/auth/auth.controller.spec.ts
+; (2tsX(hr src/auth/auth.controller.spec.ts

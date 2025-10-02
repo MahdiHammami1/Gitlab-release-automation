@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateReleaseDto } from './dto/create-release.dto';
 import { UpdateReleaseDto } from './dto/update-release.dto';
@@ -26,18 +26,27 @@ export class ReleasesService {
     });
   }
 
-  findAll() {
-    return this.prisma.release.findMany({
-      include: {
-        moduleReleases: {
-          include: {
-            module: true,
-            tag: true,
-            artefacts: true,
+  async findAll() {
+    try {
+      return await this.prisma.release.findMany({
+        include: {
+          moduleReleases: {
+            include: {
+              module: true,
+              tag: true,
+              artefacts: true,
+            },
           },
         },
-      },
-    });
+      });
+    } catch (error) {
+      console.error('Database error:', error);
+      if (error instanceof HttpException) throw error;
+      throw new HttpException(
+        'Failed to retrieve releases',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   findOne(id: string) {
